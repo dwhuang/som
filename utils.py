@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from .som import Som
+from .hexgrid import HexGrid
 
 def gen_random_data(fpath, seed=7788):
     '''Generate random 3D data for testing
@@ -10,7 +12,7 @@ def gen_random_data(fpath, seed=7788):
     d = np.random.rand(100, 3)
     with open(fpath, 'w') as fp:
         for i in range(100):
-            print("d%03d %f %f %f" % (i, d[i, 0], d[i, 1], d[i, 2]), file=fp)
+            print("d%03d\t%f\t%f\t%f" % (i, d[i, 0], d[i, 1], d[i, 2]), file=fp)
 
 
 def read_data(fpath, delimiter='\t'):
@@ -37,30 +39,40 @@ def read_data(fpath, delimiter='\t'):
     return labels, np.array(data)
 
 
-def parameter_sweep():
-    '''Sweep to find a good combination of parameters. Modify as needed.
+def parameter_sweep(som_size, data_fname, log_fname,
+        nb_init_vals, nb_infl_vals, nb_sigma_vals, 
+        lr_init_vals, lr_infl_vals, lr_sigma_vals
+    ):
+    '''Sweep to find a good combination of parameters.
     '''
-    labels, inputs = read_data('test_data.txt')
-    with open('sweep_nb.log', 'w') as fp:
-        for init in [.4, .2, .1, .01]:
-            for infl in [.3, .4, .5, .6, .7]:
-                for sigma in [0.1, 0.01, 0.001, 0.0001]:
-                    print("%d, %.2f, %.4f" % (init, infl, sigma))
-                    som = Som(grid=HexGrid(10),
-                              input_dim=inputs.shape[1],
-                              nb_init=.9,
-                              nb_infl=.4,
-                              nb_sigma=.01,
-                              lr_init=init,
-                              lr_infl=infl,
-                              lr_sigma=sigma)
-                    som.train(inputs, 1000)
-                    fp.write("{init},{infl:.2f},{sigma:.4f},{smoothness:.4f},"
-                             "{error:.4f}\n"
-                             .format(init=init,
-                                     infl=infl,
-                                     sigma=sigma,
-                                     smoothness=som.smoothness(),
-                                     error=som.error(inputs)))
-                    fp.flush()
-
+    labels, inputs = read_data(data_fname)
+    with open(log_fname, 'w') as fp:
+        for nb_init in nb_init_vals:
+            for nb_infl in nb_infl_vals:
+                for nb_sigma in nb_sigma_vals:
+                    for lr_init in lr_init_vals:
+                        for lr_infl in lr_infl_vals:
+                            for lr_sigma in lr_sigma_vals:
+                                print(
+                                    "{},{},{},{},{},{}".format(
+                                        nb_init, nb_infl, nb_sigma,
+                                        lr_init, lr_infl, lr_sigma
+                                    )
+                                )
+                                som = Som(grid=HexGrid(som_size),
+                                          input_dim=inputs.shape[1],
+                                          nb_init=nb_init,
+                                          nb_infl=nb_infl,
+                                          nb_sigma=nb_sigma,
+                                          lr_init=lr_init,
+                                          lr_infl=lr_infl,
+                                          lr_sigma=lr_sigma)
+                                som.train(inputs, 1000)
+                                fp.write(
+                                    "{},{},{},{},{},{},{:.6},{:.6}\n".format(
+                                        nb_init, nb_infl, nb_sigma,
+                                        lr_init, lr_infl, lr_sigma,
+                                        som.smoothness(), som.error(inputs)
+                                    )
+                                )
+                                fp.flush()
