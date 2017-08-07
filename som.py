@@ -27,6 +27,16 @@ class Som:
         self.lr_init = kwargs.get('lr_init', .4)
         self.lr_infl = kwargs.get('lr_infl', .4)
         self.lr_sigma = kwargs.get('lr_sigma', .001)
+        self.input_ranges = np.array(kwargs.get(
+            'input_ranges',
+            [[0] * input_dim, [1] * input_dim],
+        ), dtype=float)
+        if self.input_ranges.shape[0] != 2 or self.input_ranges.shape[1] != input_dim:
+            print(
+                "Input argument input_ranges has invalid shape",
+                self.input_ranges.shape,
+            )
+            raise RuntimeError()
         # states
         self.weights = self.__init_weights()
         self.activity = np.zeros(shape=(self.num_nodes,))
@@ -40,7 +50,9 @@ class Som:
         '''Random weight initialization
         '''
         np.random.seed(seed)
-        return np.random.rand(self.num_nodes, self.input_dim)
+        return np.random.rand(self.num_nodes, self.input_dim) * (
+            self.input_ranges[1] - self.input_ranges[0]
+        ) + self.input_ranges[0]
 
 
     def run(self, input_vec):
