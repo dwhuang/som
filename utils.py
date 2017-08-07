@@ -41,7 +41,8 @@ def read_data(fpath, delimiter='\t'):
 
 def parameter_sweep(som_size, data_fname, log_fname,
         nb_init_vals, nb_infl_vals, nb_sigma_vals, 
-        lr_init_vals, lr_infl_vals, lr_sigma_vals
+        lr_init_vals, lr_infl_vals, lr_sigma_vals,
+        **kwargs
     ):
     '''Sweep to find a good combination of parameters.
     '''
@@ -60,13 +61,15 @@ def parameter_sweep(som_size, data_fname, log_fname,
                                     )
                                 )
                                 som = Som(grid=HexGrid(som_size),
-                                          input_dim=inputs.shape[1],
-                                          nb_init=nb_init,
-                                          nb_infl=nb_infl,
-                                          nb_sigma=nb_sigma,
-                                          lr_init=lr_init,
-                                          lr_infl=lr_infl,
-                                          lr_sigma=lr_sigma)
+                                    input_dim=inputs.shape[1],
+                                    nb_init=nb_init,
+                                    nb_infl=nb_infl,
+                                    nb_sigma=nb_sigma,
+                                    lr_init=lr_init,
+                                    lr_infl=lr_infl,
+                                    lr_sigma=lr_sigma,
+                                    **kwargs
+                                )
                                 som.train(inputs, 1000)
                                 fp.write(
                                     "{},{},{},{},{},{},{:.6},{:.6}\n".format(
