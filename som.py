@@ -131,17 +131,40 @@ class Som:
                 self.learn(input_vec, trn_progress)
 
 
-    def smoothness(self):
-        '''Smoothness metric: average weight changes from a node to all its
-           neighbors, averaged over all nodes
+    def get_average_weight_jumps(self):
+        '''For each node, calculate the average of weight differences between 
+           the node and all its direct neighbor nodes
         '''
-        wt_jump_avg = np.zeros(self.num_nodes)
+        ret = np.zeros((self.num_nodes, 1))
         for i in range(self.num_nodes):
             nb_inds = self.grid.get_neighbors(i)
             nb_wts = self.weights[nb_inds, :]
             my_wts = self.weights[i, :]
-            wt_jump_avg[i] = np.average((((nb_wts - my_wts) ** 2).sum(axis=1) ** .5))
-        return np.average(wt_jump_avg)
+            ret[i, 0] = np.average(((nb_wts - my_wts) ** 2).sum(axis=1) ** .5)
+        return ret
+
+
+    def smoothness(self):
+        '''Smoothness metric: average weight changes from a node to all its
+           neighbors, averaged over all nodes
+        '''
+        return np.average(self.get_average_weight_jumps())
+
+
+    def umatrix(self, max_possible_jump=None):
+        '''Returns U-matrix representation of the SOM. Each node contains a
+           value between 0 and 1, where large values indicate small weight
+           jumps (valleys) and small values indicate large weight jumps (hills)
+        '''
+        ret = self.get_average_weight_jumps()
+        if max_possible_jump is None:
+            max_possible_jump = np.sum(
+                (self.input_ranges[1, :] - self.input_ranges[0, :]) ** 2
+            ) ** .5
+        ret /= max_possible_jump
+        ret = 1 - ret
+        return ret
+
 
     def error(self, inputs, print_details=False):
         '''Average error: error between each input vector and the winning node's

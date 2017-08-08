@@ -36,7 +36,9 @@ def read_data(fpath, delimiter='\t'):
                                    input_dim)
             labels.append(toks[0])
             data.append([np.float(x) for x in toks[1:]])
-    return labels, np.array(data)
+    data = np.array(data)
+    print('input dimension =', data.shape[1])
+    return labels, data
 
 
 def parameter_sweep(som_size, data_fname, log_fname,
