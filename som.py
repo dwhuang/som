@@ -179,3 +179,16 @@ class Som:
                       input_vec,
                       np.sum((self.weights[winner, :] - input_vec) ** 2) ** .5)
         return err / len(inputs)
+
+
+    def label(self, labels, inputs):
+        '''Returns an array, each element represents a node. Each element is
+           an array of string, which are the labels of the inputs that result
+           in the current node being selected as the winner. Nodes not selected
+           as a winner for any inputs contain empty arrays.
+        '''
+        ret = [[] for _ in range(self.num_nodes)]
+        for label, input_vec in zip(labels, inputs):
+            winner = self.run(input_vec)
+            ret[winner].append(label)
+        return ret
