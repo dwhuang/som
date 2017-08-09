@@ -32,8 +32,8 @@ class HexGrid:
 
 
     def __build_dist_map(self):
-        for i, _, _ in self.__iterator():
-            for j, _, _ in self.__iterator():
+        for i, _, _ in self.__cell_indices():
+            for j, _, _ in self.__cell_indices():
                 self.__dist_map[i, j] = self.dist(i, j)
 
 
@@ -53,12 +53,25 @@ class HexGrid:
         return -max(p, 0) + self.radius
 
 
-    def __iterator(self):
+    def __cell_indices(self):
         i = 0
         for p in range(-self.radius, self.radius + 1):
             for q in range(self.__min_q(p), self.__max_q(p) + 1):
                 yield i, p, q
                 i += 1
+
+
+    def shape_coords(self, scale=1):
+        for _, p, q in self.__cell_indices():
+            x = p * 0.5 * SQRT3 * scale + q * SQRT3 * scale
+            y = -p * 1.5 * scale
+            v1 = (x, y + 1 * scale)
+            v2 = (x + 0.5 * SQRT3 * scale, y + 0.5 * scale)
+            v3 = (x + 0.5 * SQRT3 * scale, y - 0.5 * scale)
+            v4 = (x, y - 1 * scale)
+            v5 = (x - 0.5 * SQRT3 * scale, y - 0.5 * scale)
+            v6 = (x - 0.5 * SQRT3 * scale, y + 0.5 * scale)
+            yield ((x, y), (v1, v2, v3, v4, v5, v6))
 
 
     def draw(self, colors, text=None, scale=1):
@@ -68,28 +81,26 @@ class HexGrid:
         fig = plt.figure(figsize=(9, 9))
         ax = plt.subplot(1, 1, 1)
         shapes = []
-        for i, p, q in self.__iterator():
-            x = p * 0.5 * SQRT3 * scale + q * SQRT3 * scale
-            y = -p * 1.5 * scale
-            v1 = (x, y + 1 * scale)
-            v2 = (x + 0.5 * SQRT3 * scale, y + 0.5 * scale)
-            v3 = (x + 0.5 * SQRT3 * scale, y - 0.5 * scale)
-            v4 = (x, y - 1 * scale)
-            v5 = (x - 0.5 * SQRT3 * scale, y - 0.5 * scale)
-            v6 = (x - 0.5 * SQRT3 * scale, y + 0.5 * scale)
+        for i, (centroid, vertices) in enumerate(self.shape_coords()):
             if text:
                 if isinstance(text, str):
-                    ax.text(x, y, text[i], ha='center', va='center')
+                    ax.text(
+                        centroid[0],
+                        centroid[1],
+                        text[i],
+                        ha='center',
+                        va='center'
+                    )
                 elif isinstance(text, list):
                     ax.text(
-                        x,
-                        y,
+                        centroid[0],
+                        centroid[1],
                         ','.join(text[i]),
                         ha='center',
                         va='center',
                         size='5',
                     )
-            shapes.append((v1, v2, v3, v4, v5, v6))
+            shapes.append(vertices)
         collection = PolyCollection(shapes, facecolors=colors)
         ax.add_collection(collection)
 
