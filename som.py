@@ -133,7 +133,7 @@ class Som:
 
     def get_average_weight_jumps(self):
         '''For each node, calculate the average of weight differences between 
-           the node and all its direct neighbor nodes
+           the node and all its direct neighbor nodes. Returns an nx1 matrix.
         '''
         ret = np.zeros((self.num_nodes, 1))
         for i in range(self.num_nodes):
@@ -154,7 +154,8 @@ class Som:
     def umatrix(self, max_possible_jump=None):
         '''Returns U-matrix representation of the SOM. Each node contains a
            value between 0 and 1, where large values indicate small weight
-           jumps (valleys) and small values indicate large weight jumps (hills)
+           jumps (valleys) and small values indicate large weight jumps (hills).
+           Returns a list of size n.
         '''
         ret = self.get_average_weight_jumps()
         if max_possible_jump is None:
@@ -163,6 +164,7 @@ class Som:
             ) ** .5
         ret /= max_possible_jump
         ret = 1 - ret
+        ret = ret.squeeze().tolist()
         return ret
 
 
