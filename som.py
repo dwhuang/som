@@ -59,7 +59,12 @@ class Som:
         '''Run the SOM once, taking an input vector and producing an activity
            pattern as well as a winner
         '''
-        np.sum((self.weights - input_vec) ** 2, axis=1, out=self.activity)
+        in_ind = ~np.isnan(input_vec)  # input indinces that are not NaN
+        np.sum(
+            (self.weights[:, in_ind] - input_vec[in_ind]) ** 2,
+            axis=1,
+            out=self.activity,
+        )
         self.winner = self.activity.argmin()
         return self.winner
 
@@ -102,14 +107,24 @@ class Som:
                                         0,
                                         self.lr_infl,
                                         self.lr_sigma)
+        # input - weights
+        self.delta_weights.fill(0)
+        in_ind = ~np.isnan(input_vec)  # input indices where values are not NaN
+        np.subtract(
+            input_vec,
+            self.weights,
+            out=self.delta_weights,
+            where=in_ind,
+        )
+        # lr * nb
         self.lr.fill(lr)
         self.__compute_nb(trn_progress)
         np.multiply(self.lr, self.nb,
                     out=self.lr)
-        np.subtract(input_vec, self.weights,
-                    out=self.delta_weights)
+        # delta = lr * nb * (input - weights)
         np.multiply(self.delta_weights, self.lr[:, None],
                     out=self.delta_weights)
+        # w = w + delta
         np.add(self.weights, self.delta_weights,
                out=self.weights)
 
@@ -175,11 +190,12 @@ class Som:
         err = 0
         for input_vec in inputs:
             winner = self.run(input_vec)
-            err += np.sum((self.weights[winner, :] - input_vec) ** 2) ** .5
+            in_ind = ~np.isnan(input_vec)
+            dist = np.sum((self.weights[winner, in_ind] - input_vec[in_ind])
+                    ** 2) ** .5
+            err += dist
             if print_details:
-                print(self.weights[winner, :],
-                      input_vec,
-                      np.sum((self.weights[winner, :] - input_vec) ** 2) ** .5)
+                print(self.weights[winner, :], input_vec, dist)
         return err / len(inputs)
 
 

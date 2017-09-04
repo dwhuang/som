@@ -24,7 +24,7 @@ def read_data(fpath, delimiter='\t'):
         data = []
         labels = []
         for i, line in enumerate(lines):
-            toks = line.split(delimiter)
+            toks = line.strip('\n').split(delimiter)
             tok_count = len(toks)
             if tok_count <= 1:
                 raise RuntimeError("Not enough tokens in line:", i)
@@ -35,10 +35,21 @@ def read_data(fpath, delimiter='\t'):
                                    tok_count - 1,
                                    input_dim)
             labels.append(toks[0])
-            data.append([np.float(x) for x in toks[1:]])
-    data = np.array(data)
+            data.append(['NaN' if x == '' else x for x in toks[1:]])
+    data = np.array(data).astype(np.float)
     print('input dimension =', data.shape[1])
     return labels, data
+
+
+def filter_inputs_by_nan_ratio(inputs, max_nan_ratio):
+    """ Remove from input data if the ratio of NaN features is higher than 
+        max_nan_ratio
+    """
+    dim = inputs.shape[1]
+    retain_ind = np.sum(np.isnan(inputs), axis=1) / dim <= max_nan_ratio
+    ret = inputs[retain_ind, :]
+    print("retaining inputs {}/{}".format(ret.shape[0], inputs.shape[0]))
+    return ret
 
 
 def parameter_sweep(som_size, data_fname, log_fname,
